@@ -2,11 +2,42 @@ from crewai import Crew
 from agents import TourGuideAgent
 from tasks import TourGuideTasks
 from textwrap import dedent
+from fuzzywuzzy import process
+import pycountry
 
+countries = [country.name for country in pycountry.countries]
 '''
 from dotenv import load_dotenv
 load_dotenv()
 '''
+
+def get_country():
+    while True:
+        country = input("Please enter the country you'd like to visit: ")
+        assert isinstance(country, str), 'Country must be a string.'
+
+        if country in countries:
+            return country
+        else:
+            # closest match
+            closest_match, match_score = process.extractOne(country, countries)
+            if match_score > 60:
+                suggestion = input(f'Did you mean {closest_match}? (Yes/No):').lower()
+                if suggestion == 'yes':
+                    return closest_match
+            print('Country not recognized! Please try again.')
+
+def get_days():
+    while True:
+        days = input("Please enter the number of days for your trip: ")
+        try:
+            days = int(days)
+            assert days > 0, "Number of days must be a positive integer."
+            return days 
+        except ValueError:
+            print('Invalid input. Please enter a valid integer for the number of days.')
+        except AssertionError as e:
+            print(e)
 # Define tasks and agents
 
 class TourGuideCrew:
@@ -48,16 +79,9 @@ if __name__ == '__main__':
     print(' ------------------------------ ')
 
     # define parameters 
-    country = input(
-        dedent("""
-        What country would you like to visit?
-    """))
+    country = get_country()
+    days = get_days()
     
-    days = input(
-        dedent("""
-        How many days would you like to spend here?
-    """))
-
     tour_guide_crew = TourGuideCrew(country, days )
 
     result = tour_guide_crew.run()
